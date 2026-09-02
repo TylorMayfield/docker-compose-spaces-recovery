@@ -12,7 +12,7 @@ This README includes a DigitalOcean affiliate link. If you use it, I may earn a 
 
 ## Configure the backup
 
-Copy `.env.example` outside this repository, for example to `/etc/compose-recovery.env`, then restrict it to mode `0600`.
+Copy `.env.example` outside this repository, for example with `sudo install -m 600 .env.example /etc/compose-recovery.env`. Install `awscli`, `age`, Docker Engine, and the Docker Compose plugin before running the scripts.
 
 `VOLUME_NAMES` must name only application volumes. Do not archive a live PostgreSQL data volume. When the Compose stack includes PostgreSQL, set `POSTGRES_SERVICE`, `POSTGRES_DATABASE`, and `POSTGRES_USER` so the script runs `pg_dump` before stopping services.
 
@@ -34,18 +34,19 @@ The first command changes nothing:
 sudo ./scripts/restore-compose-app.sh /etc/compose-recovery-restore.env
 ```
 
-After checking the object timestamp and test-server controls, extract the set:
+After checking the object timestamp, matching manifest, and test-server controls, restore the set:
 
 ```sh
 sudo ./scripts/restore-compose-app.sh --apply /etc/compose-recovery-restore.env
 ```
 
-Review the recovered Compose files, create new Docker volumes, restore the selected archives, and start only under the test hostname. Confirm one harmless read-only check before treating the recovery set as usable.
+The apply command creates new volumes with the `RESTORE_VOLUME_PREFIX` and restores their archives. If the set includes PostgreSQL, first start a fresh test-only PostgreSQL container and set `RESTORE_POSTGRES_CONTAINER`, `RESTORE_POSTGRES_DATABASE`, and `RESTORE_POSTGRES_USER`. The command refuses a non-test environment or an existing target volume. Review the recovered Compose files, use a test hostname, and confirm one harmless read-only check before treating the recovery set as usable.
 
 ## Test the safe default
 
 ```sh
 ./scripts/test-restore-dry-run.sh
+./scripts/test-restore-apply.sh
 ```
 
-This test does not call Spaces or need credentials.
+These tests do not call Spaces or need credentials. The second test uses fake AWS, age, and Docker commands to confirm that an apply run creates a new recovery volume and targets the configured PostgreSQL container.

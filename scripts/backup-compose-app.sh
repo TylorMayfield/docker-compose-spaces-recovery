@@ -50,7 +50,8 @@ trap 'rm -rf "$WORK_DIR"' EXIT
 
 tar -C "$WORK_DIR" -czf "$WORK_DIR/$STAMP.tar.gz" config volumes ${POSTGRES_SERVICE:+postgres.dump}
 age -r "$AGE_RECIPIENT" -o "$WORK_DIR/$STAMP.tar.gz.age" "$WORK_DIR/$STAMP.tar.gz"
-printf 'timestamp=%s\nvolumes=%s\npostgres=%s\n' "$STAMP" "$VOLUME_NAMES" "${POSTGRES_SERVICE:-none}" > "$WORK_DIR/$STAMP.manifest"
+printf 'timestamp=%s\narchive=%s.tar.gz.age\nvolumes=%s\npostgres=%s\n' \
+  "$STAMP" "$STAMP" "$VOLUME_NAMES" "${POSTGRES_SERVICE:-none}" > "$WORK_DIR/$STAMP.manifest"
 
 for file in "$WORK_DIR/$STAMP.tar.gz.age" "$WORK_DIR/$STAMP.manifest"; do
   aws s3 cp "$file" "s3://$BUCKET/$PREFIX/" \
