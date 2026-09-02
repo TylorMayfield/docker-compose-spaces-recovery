@@ -40,13 +40,25 @@ After checking the object timestamp, matching manifest, and test-server controls
 sudo ./scripts/restore-compose-app.sh --apply /etc/compose-recovery-restore.env
 ```
 
-The apply command creates new volumes with the `RESTORE_VOLUME_PREFIX` and restores their archives. If the set includes PostgreSQL, first start a fresh test-only PostgreSQL container and set `RESTORE_POSTGRES_CONTAINER`, `RESTORE_POSTGRES_DATABASE`, and `RESTORE_POSTGRES_USER`. The command refuses a non-test environment or an existing target volume. Review the recovered Compose files, use a test hostname, and confirm one harmless read-only check before treating the recovery set as usable.
+The apply command creates new volumes with the `RESTORE_VOLUME_PREFIX` and restores their archives. It writes only to those new recovery volumes and to the test-only database you name; it does not write to production.
+
+### PostgreSQL restore values
+
+If the set includes `postgres.dump`, start a fresh test-only PostgreSQL container **and create its empty test database** before applying the restore. In the root-only `/etc/compose-recovery-restore.env` file, set all four values:
+
+- `RESTORE_POSTGRES_CONTAINER`: the fresh test container's name.
+- `RESTORE_POSTGRES_DATABASE`: the new, empty database inside that container.
+- `RESTORE_POSTGRES_USER`: the database user allowed to restore into that database.
+- `RESTORE_POSTGRES_PASSWORD`: that user's password. It stays in the mode-0600 config file and is forwarded only to `pg_restore`; do not add it to this repository or a shell command.
+
+The command refuses a non-test environment, an existing target volume, or a PostgreSQL restore with a missing setting. Review the recovered Compose files, use a test hostname, and confirm one harmless read-only check before treating the recovery set as usable.
 
 ## Test the safe default
 
 ```sh
 ./scripts/test-restore-dry-run.sh
 ./scripts/test-restore-apply.sh
+./scripts/test-postgres-restore.sh
 ```
 
-These tests do not call Spaces or need credentials. The second test uses fake AWS, age, and Docker commands to confirm that an apply run creates a new recovery volume and targets the configured PostgreSQL container.
+These tests do not call Spaces or need real Spaces credentials. The second test uses fake AWS, age, and Docker commands to confirm that a password is required without exposing it, an apply run creates a new recovery volume, and PostgreSQL receives the configured environment variable. The third test uses throwaway local PostgreSQL containers to prove a password-protected restore preserves a known record.

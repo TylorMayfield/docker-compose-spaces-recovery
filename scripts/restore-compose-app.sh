@@ -61,8 +61,9 @@ if test -f "$RESTORE_DIR/postgres.dump"; then
   : "${RESTORE_POSTGRES_CONTAINER:?RESTORE_POSTGRES_CONTAINER is required for postgres.dump}"
   : "${RESTORE_POSTGRES_DATABASE:?RESTORE_POSTGRES_DATABASE is required for postgres.dump}"
   : "${RESTORE_POSTGRES_USER:?RESTORE_POSTGRES_USER is required for postgres.dump}"
-  docker exec -i "$RESTORE_POSTGRES_CONTAINER" \
-    pg_restore -U "$RESTORE_POSTGRES_USER" --clean --if-exists \
+  : "${RESTORE_POSTGRES_PASSWORD:?RESTORE_POSTGRES_PASSWORD is required for postgres.dump; keep it in the root-only restore config}"
+  PGPASSWORD="$RESTORE_POSTGRES_PASSWORD" docker exec -e PGPASSWORD -i "$RESTORE_POSTGRES_CONTAINER" \
+    pg_restore -U "$RESTORE_POSTGRES_USER" --no-owner --clean --if-exists \
     -d "$RESTORE_POSTGRES_DATABASE" < "$RESTORE_DIR/postgres.dump"
   echo "Restored postgres.dump into $RESTORE_POSTGRES_CONTAINER/$RESTORE_POSTGRES_DATABASE"
 fi

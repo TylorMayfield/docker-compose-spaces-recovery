@@ -56,6 +56,22 @@ RESTORE_POSTGRES_DATABASE=app
 RESTORE_POSTGRES_USER=app
 EOF
 
+if PATH="$TEMP_DIR/mock-bin:$PATH" \
+  MOCK_ARCHIVE="$TEMP_DIR/recovery.tar.gz" \
+  MOCK_MANIFEST="$TEMP_DIR/recovery.manifest" \
+  MOCK_DOCKER_LOG="$TEMP_DIR/docker.log" \
+  "$ROOT/scripts/restore-compose-app.sh" --apply "$TEMP_DIR/restore.env" >"$TEMP_DIR/missing-password.log" 2>&1; then
+  echo "Expected a PostgreSQL restore without RESTORE_POSTGRES_PASSWORD to fail" >&2
+  exit 1
+fi
+grep -F "RESTORE_POSTGRES_PASSWORD is required for postgres.dump" "$TEMP_DIR/missing-password.log"
+if grep -F "exec" "$TEMP_DIR/docker.log"; then
+  echo "pg_restore ran without a password" >&2
+  exit 1
+fi
+
+printf 'RESTORE_POSTGRES_PASSWORD=test-only-password\n' >> "$TEMP_DIR/restore.env"
+: > "$TEMP_DIR/docker.log"
 PATH="$TEMP_DIR/mock-bin:$PATH" \
   MOCK_ARCHIVE="$TEMP_DIR/recovery.tar.gz" \
   MOCK_MANIFEST="$TEMP_DIR/recovery.manifest" \
@@ -63,4 +79,8 @@ PATH="$TEMP_DIR/mock-bin:$PATH" \
   "$ROOT/scripts/restore-compose-app.sh" --apply "$TEMP_DIR/restore.env"
 
 grep -Fx "volume create recovered_app_data" "$TEMP_DIR/docker.log"
-grep -F "exec -i fresh-postgres pg_restore -U app --clean --if-exists -d app" "$TEMP_DIR/docker.log"
+grep -F "exec -e PGPASSWORD -i fresh-postgres pg_restore -U app --no-owner --clean --if-exists -d app" "$TEMP_DIR/docker.log"
+if grep -F "test-only-password" "$TEMP_DIR/docker.log" "$TEMP_DIR/missing-password.log"; then
+  echo "A PostgreSQL password appeared in test output" >&2
+  exit 1
+fi
