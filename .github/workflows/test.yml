@@ -1,0 +1,13 @@
+name: Recovery fixtures
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  recovery:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - run: python3 scripts/test-backup-consistency.py
+      - run: bash scripts/test-restore-dry-run.sh
+      - run: bash scripts/test-restore-apply.sh
+      - run: bash scripts/test-postgres-restore.sh

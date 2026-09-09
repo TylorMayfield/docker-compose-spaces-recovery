@@ -2,19 +2,19 @@
 
 This companion backs up one Docker Compose application's protected configuration, selected named volumes, and an optional PostgreSQL logical dump. It encrypts the timestamped set before upload. The restore command is dry-run by default and refuses any environment except `RESTORE_ENV=test`.
 
-Read the guide: [Back Up a Docker Compose App and Test the Restore](https://www.tylor.nz/content/back-up-docker-compose-app-and-test-restore?utm_source=github&utm_medium=referral&utm_campaign=digitalocean-guides&utm_content=companion-readme)
+Read the guide: [Back Up a Docker Compose App and Test the Restore](https://www.tylor.nz/content/back-up-docker-compose-app-and-test-restore)
 
 ## Disclosure
 
 This README includes a DigitalOcean affiliate link. If you use it, I may earn a commission at no additional cost to you.
 
-[Create a private DigitalOcean Spaces bucket](https://www.tylor.nz/go/digitalocean?utm_source=github&utm_medium=affiliate&utm_campaign=digitalocean-guides&utm_content=back-up-docker-compose-app-and-test-restore&product=spaces&placement=companion-readme&variant=readme-primary&locale=en)
+[Visit DigitalOcean to set up Spaces](https://www.tylor.nz/go/digitalocean?utm_source=github&utm_medium=affiliate&utm_campaign=digitalocean-guides&utm_content=back-up-docker-compose-app-and-test-restore&product=spaces&placement=companion-readme)
 
 ## Configure the backup
 
 Copy `.env.example` outside this repository, for example with `sudo install -m 600 .env.example /etc/compose-recovery.env`. Install `awscli`, `age`, Docker Engine, and the Docker Compose plugin before running the scripts.
 
-`VOLUME_NAMES` must name only application volumes. Do not archive a live PostgreSQL data volume. When the Compose stack includes PostgreSQL, set `POSTGRES_SERVICE`, `POSTGRES_DATABASE`, and `POSTGRES_USER` so the script runs `pg_dump` before stopping services.
+`VOLUME_NAMES` must name only application volumes. Do not archive a live PostgreSQL data volume. When the Compose stack includes PostgreSQL, set `POSTGRES_SERVICE`, `POSTGRES_DATABASE`, and `POSTGRES_USER` so the script keeps PostgreSQL running while application writers are stopped for the database dump and file capture.
 
 Run the backup by hand first:
 
@@ -62,3 +62,9 @@ The command refuses a non-test environment, an existing target volume, or a Post
 ```
 
 These tests do not call Spaces or need real Spaces credentials. The second test uses fake AWS, age, and Docker commands to confirm that a password is required without exposing it, an apply run creates a new recovery volume, and PostgreSQL receives the configured environment variable. The third test uses throwaway local PostgreSQL containers to prove a password-protected restore preserves a known record.
+
+## Capture consistency
+
+Before running a backup, pause writers outside this Compose stack, including direct database clients and host processes that change its files. The script stops the running non-PostgreSQL services before taking the database dump and file archives. PostgreSQL remains available for the dump. The script resumes only the services it stopped, including after a failed stop, dump, or archive. An upload begins only after capture succeeds.
+
+Run `python3 scripts/test-backup-consistency.py` for the local command-fixture test. It checks that the database-to-file capture happens while application writers are stopped and that failures resume services without uploading an incomplete set. It does not prove a live cloud restore.
