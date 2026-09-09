@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 TEMP_DIR=$(mktemp -d)
-SUFFIX=$(LC_ALL=C tr -dc 'a-z0-9' </dev/urandom | head -c 8)
+SUFFIX=$(python3 -c 'import secrets; print(secrets.token_hex(4))')
 SOURCE_CONTAINER="compose-recovery-source-$SUFFIX"
 TARGET_CONTAINER="compose-recovery-target-$SUFFIX"
 trap 'docker rm -f "$SOURCE_CONTAINER" "$TARGET_CONTAINER" >/dev/null 2>&1 || true; rm -rf "$TEMP_DIR"' EXIT
