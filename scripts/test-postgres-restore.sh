@@ -16,7 +16,7 @@ wait_for_postgres() {
   local user=$2
   local password=$3
   for _ in $(seq 1 30); do
-    if docker exec -e PGPASSWORD="$password" "$container" pg_isready -U "$user" >/dev/null 2>&1; then
+    if docker exec -e PGPASSWORD="$password" "$container" pg_isready -h 127.0.0.1 -U "$user" >/dev/null 2>&1; then
       return 0
     fi
     sleep 1
