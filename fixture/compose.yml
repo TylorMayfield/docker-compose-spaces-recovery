@@ -1,0 +1,24 @@
+name: recovery-fixture
+services:
+  app:
+    image: alpine:3.21
+    command: sh -c 'mkdir -p /data/uploads; printf "record-42\n" > /data/uploads/record-42.txt; exec sleep infinity'
+    volumes:
+      - app_data:/data
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: fixture
+      POSTGRES_USER: fixture
+      POSTGRES_PASSWORD: disposable-fixture-only
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -h 127.0.0.1 -U fixture -d fixture"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+volumes:
+  app_data:
+    name: recovery-fixture_app_data
+  database:
