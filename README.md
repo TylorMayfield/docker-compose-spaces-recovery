@@ -2,13 +2,13 @@
 
 This companion backs up one Docker Compose application's protected configuration, selected named volumes, and an optional PostgreSQL logical dump. It encrypts the timestamped set before upload. The restore command is dry-run by default and refuses any environment except `RESTORE_ENV=test`.
 
-Read the guide: [Back Up a Docker Compose App and Test the Restore](https://www.tylor.nz/content/back-up-docker-compose-app-and-test-restore)
+Follow the [Docker Compose recovery guide](https://www.tylor.nz/content/back-up-docker-compose-app-and-test-restore?utm_source=github&utm_medium=referral&utm_campaign=digitalocean-guides&utm_content=companion-readme) to define the recovery inventory, configure the backup and rehearse a restore.
 
 ## Disclosure
 
 This README includes a DigitalOcean affiliate link. If you use it, I may earn a commission at no additional cost to you.
 
-[Visit DigitalOcean to set up Spaces](https://www.tylor.nz/go/digitalocean?utm_source=github&utm_medium=affiliate&utm_campaign=digitalocean-guides&utm_content=back-up-docker-compose-app-and-test-restore&product=spaces&placement=companion-readme)
+[Review Spaces storage for your recovery copies](https://www.tylor.nz/go/digitalocean?utm_source=github&utm_medium=affiliate&utm_campaign=digitalocean-guides&utm_content=back-up-docker-compose-app-and-test-restore&product=spaces&placement=companion-readme). Budget for storage and the separate test server before creating resources. An uploaded archive is not proof that your application can be recovered.
 
 ## Configure the backup
 
